@@ -73,6 +73,8 @@ var vm = new Vue({
                     .then(response => {
                         if (response.data.count > 0) {
                             this.error_name_message = '用户名已存在';
+                            console.log(this.error_name_message)
+                            console.log(response.data.count );
                             this.error_name = true;
                         } else {
                             this.error_name = false;
