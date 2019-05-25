@@ -2,7 +2,7 @@ from django.contrib.auth import login
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
-from django.http.response import HttpResponse, HttpResponseForbidden,JsonResponse
+from django.http.response import HttpResponse, HttpResponseForbidden, JsonResponse
 import re
 
 # Create your views here.
@@ -39,7 +39,7 @@ class RegisterView(View):
         # 2.3 校验两个密码是否一致
 
         # 2.4 校验手机号
-        if not re.match(r'^1[345789]\d{9}$', mobile):
+        if not re.match(r'^1[3-9]\d{9}$', mobile):
             return HttpResponseForbidden('请输入正确的手机号码')
         # 2.5 是否勾选同意 按钮
         if allow != 'on':
@@ -60,6 +60,8 @@ class RegisterView(View):
 
         # 5.1 成功 重定向到首页re
         return redirect(reverse('contents:index'))
+
+
 class UsernameCountView(View):
     """判断用户名是否重复注册"""
 
@@ -70,4 +72,11 @@ class UsernameCountView(View):
         :return: JSON
         """
         count = User.objects.filter(username=username).count()
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'count': count})
+
+
+class MobileCountView(View):
+    def get(self, request, mobile):
+        count = User.objects.filter(mobile=mobile).count()
+
         return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'count': count})

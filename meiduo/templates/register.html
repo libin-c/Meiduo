@@ -49,7 +49,7 @@
                 <li>
                     <label>图形验证码:</label>
                     <input type="text" name="pic_code" id="pic_code" class="msg_input" v-model="image_code" @blur="check_image_code">
-                    <img src="/static/images/pic_code.jpg" alt="图形验证码" class="pic_code" @click="generate_image_code">
+                    <img :src="image_code_url" alt="图形验证码" class="pic_code" @click="generate_image_code">
                     <span class="error_tip" v-show="error_image_code">请填写图形验证码</span>
                 </li>
                 <li>

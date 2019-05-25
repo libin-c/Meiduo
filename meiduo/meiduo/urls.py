@@ -21,7 +21,12 @@ urlpatterns = [
     # 注册
     url(r'^', include('apps.users.urls', namespace='users')),
 
-
     # 首页
     url(r'^', include('apps.contents.urls', namespace='contents')),
+
+    # 验证码
+    url(r'^', include('apps.verifications.urls', namespace='verifications')),
+
+
+
 ]
