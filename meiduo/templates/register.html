@@ -56,15 +56,18 @@
                     <label>短信验证码:</label>
                     <input type="text" name="msg_code" id="msg_code" class="msg_input" v-model="sms_code" @blur="check_sms_code">
                     <a href="javascript:;" class="get_msg_code" @click="send_sms_code">[[ sms_code_tip ]]</a>
-                    <span class="error_tip" v-show="error_sms_code">请填写短信验证码</span>
+                        <span v-show="error_sms_code" class="error_tip">[[ error_sms_code_message ]]</span>
+                        {% if sms_code_errmsg %}
+                            <span class="error_tip">{{ sms_code_errmsg }} </span>
+                        {% endif %}
                 </li>
                 <li class="agreement">
                     <input type="checkbox" name="allow" id="allow" checked="checked" @click="check_allow" v-model="allow">
                     <label>同意”美多商城用户使用协议“</label>
                     <span class="error_tip" v-show="error_allow">[[error_allow_message]]</span>
                 </li>
-                {% if register_errmsg %}
-                    <span style="color: red">{{ register_errmsg }}</span>
+                {% if register_message %}
+                    <span style="color: red">{{ register_message }}</span>
                 {% endif %}
                 <li class="reg_sub">
                     <input type="submit" value="注 册">

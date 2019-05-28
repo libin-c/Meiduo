@@ -164,8 +164,10 @@ var vm = new Vue({
             this.sending_flag = true;
 
             // 校验参数，保证输入框有数据填写
-            this.check_phone();
-            this.check_image_code();
+            if(this.error_phone == false){
+                this.check_image_code();
+            }
+
 
             if (this.error_phone == true || this.error_image_code == true) {
                 this.sending_flag = false;
