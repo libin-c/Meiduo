@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'apps.contents',
     # 验证码子应用
     'apps.verifications',
+    # QQ认证
+    'apps.oauth',
 ]
 
 MIDDLEWARE = [
@@ -212,3 +214,13 @@ logger = logging.getLogger('django')
 
 # 设置自己的users 应用
 AUTH_USER_MODEL = 'users.User'
+
+# 指定自定义的用户认证后端
+AUTHENTICATION_BACKENDS = ['apps.users.utils.UsernameMobileAuthBackend']
+
+# 设置登录的路由
+LOGIN_URL = '/login/'
+
+QQ_CLIENT_ID = '101518219'
+QQ_CLIENT_SECRET = '418d84ebdc7241efb79536886ae95224'
+QQ_REDIRECT_URI = 'http://www.meiduo.site:8000/oauth_callback'

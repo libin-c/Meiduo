@@ -1,4 +1,5 @@
 from django.contrib.auth import login, logout
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
@@ -15,13 +16,23 @@ from meiduo.settings.dev import logger
 from utils.response_code import RETCODE
 
 
+class TestView(View):
+    def get(self, request):
+        return render(request, 'oauth_callback.html')
+
+
+class InfoView(LoginRequiredMixin, View):
+    def get(self, request):
+        return render(request, 'user_center_info.html')
+
+
 class LogoutView(View):
     def get(self, request):
         """实现退出登录逻辑"""
         # 清理session
         logout(request)
         # 退出登录，重定向到登录页
-        response = redirect(reverse('contents:index'))
+        response = redirect(reverse('users:login'))
         # 退出登录时清除cookie中的username
         response.delete_cookie('username')
 
@@ -69,8 +80,12 @@ class LoginView(View):
             request.session.set_expiry(None)
 
         # 6.返回响应结果
-        response = redirect(reverse('contents:index'))
-        response.set_cookie('username', username, constants.USERNAME_EXPIRE_TIME)
+        next = request.GET.get('next')
+        if next:
+            response = redirect(next)
+        else:
+            response = redirect(reverse('contents:index'))
+            response.set_cookie('username', username, constants.USERNAME_EXPIRE_TIME)
         return response
 
 
