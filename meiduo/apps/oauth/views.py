@@ -12,7 +12,7 @@ from QQLoginTool.QQtool import OAuthQQ
 from django_redis import get_redis_connection
 
 from apps.oauth.models import OAuthQQUser
-from apps.oauth.utils import SecretOauth
+from utils.secret import SecretOauth
 from apps.users import constants
 from apps.users.models import User
 from meiduo.settings.dev import logger

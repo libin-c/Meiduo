@@ -1,9 +1,11 @@
+import json
 from django.contrib.auth import login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
-from django.http.response import HttpResponse, HttpResponseForbidden, JsonResponse
+from django.http.response import HttpResponse, HttpResponseForbidden, JsonResponse, HttpResponseBadRequest, \
+    HttpResponseServerError
 import re
 
 # Create your views here.
@@ -12,20 +14,80 @@ from django_redis import get_redis_connection
 
 from apps.users import constants
 from apps.users.models import User
+from apps.users.utils import generate_verify_email_url, check_verify_email_token
+from celery_tasks.email.tasks import send_verify_email
 from meiduo.settings.dev import logger
 from utils.response_code import RETCODE
 
+# 邮箱验证
+class VerifyEmailView(View):
+    def get(self,request):
+        """实现邮箱验证逻辑"""
+        # 接收参数
+        token = request.GET.get('token')
 
-class TestView(View):
-    def get(self, request):
-        return render(request, 'oauth_callback.html')
+        # 校验参数：判断token是否为空和过期，提取user
+        if not token:
+            return HttpResponseBadRequest('缺少token')
+
+        user = check_verify_email_token(token)
+        if not user:
+            return HttpResponseForbidden('无效的token')
+
+        # 修改email_active的值为True
+        try:
+            user.email_active = True
+            user.save()
+        except Exception as e:
+            logger.error(e)
+            return HttpResponseServerError('激活邮件失败')
+
+        # 返回邮箱验证结果
+        return redirect(reverse('users:info'))
+
+# 邮箱
+class EmailView(LoginRequiredMixin, View):
+    def put(self, request):
+        '''
+        实现添加邮箱逻辑
+        :param request:
+        :return:
+        '''
+        json_str = request.body.decode()
+        json_dict = json.loads(json_str)
+        email = json_dict.get('email')
+
+        # 校验参数 ---->正则
+        if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+            return HttpResponseForbidden('参数email有误')
+
+        # 给 email 赋值
+        try:
+            request.user.email = email
+            request.user.save()
+        except Exception as e:
+            logger.error(e)
+            return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '添加邮箱失败'})
+        # 4.异步发送邮件
+
+        verify_url = generate_verify_email_url(request.user)
+        send_verify_email.delay(email, verify_url)
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': '添加邮箱成功'})
 
 
+# 用户中心
 class InfoView(LoginRequiredMixin, View):
     def get(self, request):
-        return render(request, 'user_center_info.html')
+        context = {
+            'username': request.user.username,
+            'mobile': request.user.mobile,
+            'email': request.user.email,
+            'email_active': request.user.email_active
+        }
+        return render(request, 'user_center_info.html', context=context)
 
 
+# 登出
 class LogoutView(View):
     def get(self, request):
         """实现退出登录逻辑"""
@@ -39,6 +101,7 @@ class LogoutView(View):
         return response
 
 
+# 登录页面
 class LoginView(View):
 
     # 登录页面显示
@@ -89,6 +152,7 @@ class LoginView(View):
         return response
 
 
+# 注册页面逻辑
 class RegisterView(View):
 
     # 注册页面显示
@@ -156,6 +220,7 @@ class RegisterView(View):
         return response
 
 
+# 用户名验重
 class UsernameCountView(View):
     """判断用户名是否重复注册"""
 
@@ -169,6 +234,7 @@ class UsernameCountView(View):
         return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'count': count})
 
 
+# 手机验重
 class MobileCountView(View):
     def get(self, request, mobile):
         count = User.objects.filter(mobile=mobile).count()
