@@ -9,6 +9,11 @@
     <script type="text/javascript" src="/static/js/host.js"></script>
     <script type="text/javascript" src="/static/js/vue-2.5.16.js"></script>
     <script type="text/javascript" src="/static/js/axios-0.18.0.min.js"></script>
+    <style>
+        .login_btn em{
+            color:orange;
+        }
+    </style>
 </head>
 <body>
 <div id="app" v-cloak>
@@ -53,8 +58,8 @@
             <ul>
                 <li><a href="{{ url('users:info') }}">· 个人信息</a></li>
                 <li><a href="/static/user_center_order.html">· 全部订单</a></li>
-                <li><a href="{{ url('areas:address') }}" class="active">· 收货地址</a></li>
-                <li><a href="/password/">· 修改密码</a></li>
+                <li><a href="{{ url('users:address') }}" class="active">· 收货地址</a></li>
+                <li><a href="{{ url('users:update_pwd') }}">· 修改密码</a></li>
             </ul>
         </div>
         <div class="right_content clearfix" v-cloak>

@@ -10,13 +10,6 @@ from meiduo.settings.dev import logger
 from utils.response_code import RETCODE
 
 
-class AddressView(LoginRequiredMixin, View):
-    def get(self, request):
-        """提供收货地址界面"""
-
-        return render(request, 'user_center_site.html')
-
-
 class AreasView(View):
     def get(self, request):
         '''

@@ -11,6 +11,10 @@ var vm = new Vue({
         error_pwd: false,
         error_cpwd: false
     },
+    mounted(){
+        this.username=getCookie('username');
+        console.log(this.username);
+    },
     methods: {
         // 检查旧密码
         check_opwd(){

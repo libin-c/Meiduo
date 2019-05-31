@@ -16,6 +16,11 @@
         let email = "{{ email }}";
         let email_active = "{{ email_active }}";
     </script>
+    <style>
+        .login_btn em{
+            color:orange;
+        }
+    </style>
 </head>
 <body>
 <div id="app" v-cloak>
@@ -64,8 +69,8 @@
                 <li><a href="{{ url('users:info') }}" class="active">· 个人信息</a></li>
                 <li><a href="../static/user_center_order.html">· 全部订单</a></li>
                 {#                <li><a href="#">· 收货地址</a></li>#}
-                <li><a href="{{ url('areas:address') }}">· 收货地址</a></li>
-                <li><a href="../static/user_center_pass.html">· 修改密码</a></li>
+                <li><a href="{{ url('users:address') }}">· 收货地址</a></li>
+                <li><a href="{{ url('users:update_pwd') }}">· 修改密码</a></li>
             </ul>
         </div>
         <div class="right_content clearfix">
