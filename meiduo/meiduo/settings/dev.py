@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'apps.oauth',
     # 地址认证
     'apps.areas',
+    # 商品认证
+    'apps.goods',
 ]
 
 MIDDLEWARE = [

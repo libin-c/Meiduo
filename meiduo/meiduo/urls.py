@@ -29,4 +29,6 @@ urlpatterns = [
     url(r'^', include('apps.oauth.urls', namespace='oauth')),
     # 三级联动地址
     url(r'^', include('apps.areas.urls', namespace='areas')),
+    # 商品
+    url(r'^', include('apps.goods.urls', namespace='goods')),
 ]
