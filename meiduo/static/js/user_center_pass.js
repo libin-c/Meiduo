@@ -9,7 +9,8 @@ var vm = new Vue({
         new_cpwd: '',
         error_opwd: false,
         error_pwd: false,
-        error_cpwd: false
+        error_cpwd: false,
+        error_password_message:'请输入8-12位的密码'
     },
     mounted(){
         this.username=getCookie('username');
@@ -24,6 +25,21 @@ var vm = new Vue({
             } else {
                 this.error_opwd = true;
             }
+            // if (this.error_opwd == false) {
+            //     // var url = this.host + '/pwd/' + this.old_pwd ;
+            //     axios.get(url, {
+            //         responseType: 'json'
+            //     })
+            //         .then(response => {
+            //
+            //             this.error_password_message = '原始密码错误';
+            //             this.error_opwd = true;
+            //
+            //         })
+            //         .catch(error => {
+            //             console.log(error.response);
+            //         })
+            // }
         },
         // 检查新密码
         check_pwd(){

@@ -74,6 +74,9 @@
                             <label>当前密码：</label>
                             <input type="password" v-model="old_pwd" class="old_pwd" name="old_pwd" @blur="check_opwd">
                             <span class="old_pwd_error" v-show="error_opwd">请输入8-12位的密码</span>
+                             {% if origin_pwd_errmsg %}
+                                <div class="old_pwd_error">{{ origin_pwd_errmsg }}</div>
+                            {% endif %}
                         </div>
                         <div class="form_group">
                             <label>新密码：</label>

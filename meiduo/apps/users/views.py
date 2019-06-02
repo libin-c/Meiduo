@@ -39,10 +39,9 @@ class UpdatePwdView(View):
         # 校验参数
         if not all([old_password, new_password, new_password2]):
             return HttpResponseForbidden('缺少必传参数')
-        try:
-            request.user.check_password(old_password)
-        except Exception as e:
-            logger.error(e)
+
+        ret = request.user.check_password(old_password)
+        if ret == False:
             return render(request, 'user_center_pass.html', {'origin_pwd_errmsg': '原始密码错误'})
         if not re.match(r'^[0-9A-Za-z]{8,20}$', new_password):
             return HttpResponseForbidden('密码最少8位，最长20位')
