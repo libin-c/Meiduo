@@ -31,4 +31,6 @@ urlpatterns = [
     url(r'^', include('apps.areas.urls', namespace='areas')),
     # 商品
     url(r'^', include('apps.goods.urls', namespace='goods')),
+    # 检索引擎 甘草
+    url(r'^search/', include('haystack.urls')),
 ]
