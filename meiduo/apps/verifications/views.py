@@ -1,4 +1,6 @@
 from django.http import HttpResponse, JsonResponse
+
+from apps.verifications import constants
 from .constants import *
 # Create your views here.
 from django.views import View
@@ -25,7 +27,7 @@ class ImageCodeView(View):
         # 3. 想redis缓存 存验证码
 
         redis_conn = get_redis_connection('verify_image_code')
-        redis_conn.setex('img_%s' % uuid, 300, text)
+        redis_conn.setex('img_%s' % uuid, constants.IMAGE_CODE_REDIS_EXPIRES, text)
 
         # 4. 响应图片验证码
         return HttpResponse(image_code, content_type='imgae/jpeg')

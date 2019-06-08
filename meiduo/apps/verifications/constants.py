@@ -12,3 +12,5 @@ MAX = 999999
 
 # 占位
 PO = 1
+# 图片过期的时间
+IMAGE_CODE_REDIS_EXPIRES = 300

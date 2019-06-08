@@ -33,5 +33,6 @@ urlpatterns = [
     url(r'^password/$', views.UpdatePwdView.as_view(), name='update_pwd'),
     # 15. 浏览记录 /browse_histories/
     url(r'^browse_histories/$', views.UserBrowseHistoryView.as_view(), name='history'),
-
+    # 16 我的订单 /orders/comment/
+    url(r'^orders/$', views.UserOrderView.as_view(), name='order'),
 ]

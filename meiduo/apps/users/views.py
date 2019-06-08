@@ -21,6 +21,10 @@ from meiduo.settings.dev import logger
 from utils.response_code import RETCODE
 from apps.contents.models import SKU
 
+class UserOrderView(LoginRequiredMixin,View):
+    def get(self,request):
+        return  render(request, 'user_center_order.html')
+
 
 class UserBrowseHistoryView(LoginRequiredMixin, View):
     def post(self, request):
