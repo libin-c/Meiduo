@@ -1,17 +1,19 @@
 from django.core.paginator import Paginator, EmptyPage
-from django.http import HttpResponseNotFound, JsonResponse
+from django.http import HttpResponseNotFound, JsonResponse, HttpResponseServerError
 from django.shortcuts import render
-
+from datetime import datetime
 # Create your views here.
 from django.views import View
 
 from apps.contents import models
-from apps.contents.models import SKU
+from apps.contents.models import SKU, GoodsCategory
 from apps.contents.utils import get_categories
 from apps.goods import constants
+from apps.goods.models import GoodsVisitCount
 from apps.goods.utils import get_breadcrumb
 from meiduo.settings.dev import logger
 from utils.response_code import RETCODE
+
 
 class DetailView(View):
     """商品详情页"""
@@ -20,8 +22,8 @@ class DetailView(View):
         """提供商品详情页"""
         # 获取当前sku的信息
         try:
-            sku = models.SKU.objects.get(id=sku_id)
-        except models.SKU.DoesNotExist:
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
             return render(request, '404.html')
 
         # 查询商品频道分类
@@ -85,7 +87,7 @@ class HotGoodsView(View):
         '''
         # 根据商品的倒序排序 取前两个
         try:
-            skus = SKU.objects.filter(category_id=category_id,is_launched=True).order_by('-sales')[:2]
+            skus = SKU.objects.filter(category_id=category_id, is_launched=True).order_by('-sales')[:2]
         except Exception as e:
             logger.error(e)
             return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '查询的数据不存在', 'hot_skus': []})
@@ -100,6 +102,7 @@ class HotGoodsView(View):
             })
 
         return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'hot_skus': hot_skus})
+
 
 # 商品列表分页与排序
 class ListView(View):
@@ -159,3 +162,41 @@ class ListView(View):
             'page_num': page_num,  # 当前页码
         }
         return render(request, 'list.html', context)
+
+
+class DetailVisitView(View):
+    def post(self, request, category_id):
+        '''
+        商品访问 也就是所谓的日活
+        如果访问记录存在，说明今天不是第一次访问，不新建记录，访问量直接累加。
+        如果访问记录不存在，说明今天是第一次访问，新建记录并保存访问量。
+        :param request:
+        :param category_id:
+        :return:
+        '''
+        try:
+            # 1.获取当前商品
+            category = GoodsCategory.objects.get(id=category_id)
+        except Exception as e:
+            return HttpResponseNotFound('缺少必传参数')
+
+        # 2.查询日期数据
+        # 将日期按照格式转换成字符串
+        today_str = datetime.now().strftime('%Y-%m-%d')
+        # 将字符串再转换成日期格式
+        today_date = datetime.strptime(today_str, '%Y-%m-%d')
+        try:
+            # 3.如果有当天商品分类的数据  就累加数量
+            count_data = category.goodsvisitcount_set.get(date=today_date)
+        except:
+            # 4. 没有, 就新建之后在增加
+            count_data = GoodsVisitCount()
+
+        try:
+            count_data.count += 1
+            count_data.category = category
+            count_data.save()
+        except Exception as e:
+            return HttpResponseServerError('新增失败')
+
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})

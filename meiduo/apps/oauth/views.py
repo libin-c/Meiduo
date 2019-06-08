@@ -11,6 +11,7 @@ from django.views import View
 from QQLoginTool.QQtool import OAuthQQ
 from django_redis import get_redis_connection
 
+from apps.carts.utils import merge_cart_cookie_to_redis
 from apps.oauth.models import OAuthQQUser
 from utils.secret import SecretOauth
 from apps.users import constants
@@ -148,6 +149,7 @@ class QQAuthUserView(View):
         # 响应绑定结果
         next = request.GET.get('state')
         response = redirect(next)
+        response = merge_cart_cookie_to_redis(request=request, user=user, response=response)
 
         # 登录时用户名写入到cookie，有效期15天
         response.set_cookie('username', user.username, max_age=3600 * 24 * 15)

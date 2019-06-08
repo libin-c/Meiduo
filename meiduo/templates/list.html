@@ -32,7 +32,7 @@
                     <span>|</span>
                     <a href="{{ url('users:info') }}">用户中心</a>
                     <span>|</span>
-                    <a href="../static/cart.html">我的购物车</a>
+                    <a href="{{ url('carts:info') }}">我的购物车</a>
                     <span>|</span>
                     <a href="../static/user_center_order.html">我的订单</a>
                 </div>
@@ -55,14 +55,14 @@
             </ul>
         </div>
 
-        <div class="guest_cart fr">
-            <a href="/carts/" class="cart_name fl">我的购物车</a>
+        <div @mouseenter="get_carts" class="guest_cart fr" v-cloak>
+            <a href="{{ url('carts:info') }}" class="cart_name fl">我的购物车</a>
             <div class="goods_count fl" id="show_count">[[ cart_total_count ]]</div>
             <ul class="cart_goods_show">
-                <li v-for="cart in carts">
-                    <img :src="cart.default_image_url" alt="商品图片">
-                    <h4>[[ cart.name ]]</h4>
-                    <div>[[ cart.count ]]</div>
+                <li v-for="sku in carts">
+                    <img :src="sku.default_image_url" alt="商品图片">
+                    <h4>[[ sku.name ]]</h4>
+                    <div>[[ sku.count ]]</div>
                 </li>
             </ul>
         </div>
@@ -145,7 +145,7 @@
                         <div class="operate">
                             <span class="price">￥{{ sku.price }}</span>
                             <span class="unit">台</span>
-                            <a href="#" class="add_goods" title="加入购物车"></a>
+                            <a href="javascript:;" @click="add_carts" class="add_goods" title="加入购物车"></a>
                         </div>
                     </li>
                 {% endfor %}
@@ -173,7 +173,7 @@
     </div>
 </div>
 <script type="text/javascript">
-        let category_id = "{{ category.id }}";
+    let category_id = "{{ category.id }}";
 </script>
 <script type="text/javascript" src="{{ static('js/common.js') }}"></script>
 <script type="text/javascript" src="{{ static('js/list.js') }}"></script>

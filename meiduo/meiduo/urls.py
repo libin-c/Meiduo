@@ -33,4 +33,7 @@ urlpatterns = [
     url(r'^', include('apps.goods.urls', namespace='goods')),
     # 检索引擎 甘草
     url(r'^search/', include('haystack.urls')),
+    # 购物车
+    url(r'^', include('apps.carts.urls',namespace='carts')),
+
 ]

@@ -12,12 +12,63 @@ import re
 # 1. 注册页面 功能
 from django_redis import get_redis_connection
 
+from apps.carts.utils import merge_cart_cookie_to_redis
 from apps.users import constants
 from apps.users.models import User, Address
 from apps.users.utils import generate_verify_email_url, check_verify_email_token
 from celery_tasks.email.tasks import send_verify_email
 from meiduo.settings.dev import logger
 from utils.response_code import RETCODE
+from apps.contents.models import SKU
+
+
+class UserBrowseHistoryView(LoginRequiredMixin, View):
+    def post(self, request):
+        """保存用户浏览记录"""
+        # 1.接收json参数
+        sku_id = json.loads(request.body.decode()).get('sku_id')
+        print(sku_id)
+
+        # 2.根据sku_id 查询sku
+        try:
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return HttpResponseForbidden('商品不存在!')
+
+        # 3.如果有sku,保存到redis
+        history_redis_client = get_redis_connection('history')
+        history_key = 'history_%s' % request.user.id
+
+        redis_pipeline = history_redis_client.pipeline()
+        # 3.1 去重
+        redis_pipeline.lrem(history_key, 0, sku_id)
+        # 3.2 存储
+        redis_pipeline.lpush(history_key, sku_id)
+        # 3.3 截取 5个
+        redis_pipeline.ltrim(history_key, 0, 4)
+        redis_pipeline.execute()
+
+        # 响应结果
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
+    def get(self, request):
+        """获取用户浏览记录"""
+        # 获取Redis存储的sku_id列表信息
+        redis_conn = get_redis_connection('history')
+        sku_ids = redis_conn.lrange('history_%s' % request.user.id, 0, -1)
+
+        # 根据sku_ids列表数据，查询出商品sku信息
+        skus = []
+        for sku_id in sku_ids:
+            sku = SKU.objects.get(id=sku_id)
+            skus.append({
+                'id': sku.id,
+                'name': sku.name,
+                'default_image_url': sku.default_image.url,
+                'price': sku.price
+            })
+
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'skus': skus})
 
 
 class UpdatePwdView(View):
@@ -443,6 +494,7 @@ class LoginView(View):
         else:
             response = redirect(reverse('contents:index'))
             response.set_cookie('username', username, constants.USERNAME_EXPIRE_TIME)
+            response = merge_cart_cookie_to_redis(request=request, user=user, response=response)
         return response
 
 
