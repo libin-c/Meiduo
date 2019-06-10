@@ -3,6 +3,8 @@ var vm = new Vue({
     // 修改Vue变量的读取语法，避免和django模板语法冲突
     delimiters: ['[[', ']]'],
     data: {
+        cart_total_count: 0,
+        carts: [],
         host,
         is_show_edit: false,
         provinces: [],
@@ -32,6 +34,7 @@ var vm = new Vue({
         add_title: '新  增'
     },
     mounted() {
+        this.get_carts();
         // 获取省份数据
         this.get_provinces();
         // 将用户地址列表绑定到变量, addresses 是django模板传给vue的json字符串
@@ -84,6 +87,25 @@ var vm = new Vue({
         }
     },
     methods: {
+        get_carts() {
+            let url = '/carts/simple/';
+            axios.get(url, {
+                responseType: 'json',
+            })
+                .then(response => {
+                    this.carts = response.data.cart_skus;
+                    this.cart_total_count = 0;
+                    for (let i = 0; i < this.carts.length; i++) {
+                        if (this.carts[i].name.length > 25) {
+                            this.carts[i].name = this.carts[i].name.substring(0, 25) + '...';
+                        }
+                        this.cart_total_count += this.carts[i].count;
+                    }
+                })
+                .catch(error => {
+                    console.log(error.response);
+                })
+        },
         // 获取省份数据
         get_provinces() {
             var url = this.host + '/areas/';

@@ -1,6 +1,6 @@
 var vm = new Vue({
     el: '#app',
-	// 修改Vue变量的读取语法，避免和django模板语法冲突
+    // 修改Vue变量的读取语法，避免和django模板语法冲突
     delimiters: ['[[', ']]'],
     data: {
         host: host,
@@ -8,16 +8,38 @@ var vm = new Vue({
         pay_method: 2, // 支付方式,默认支付宝支付
         nowsite: '', // 默认地址
         payment_amount: '',
+        cart_total_count: 0,
+        carts: [],
     },
-    mounted(){
+    mounted() {
+        this.get_carts();
         // 初始化
         this.payment_amount = payment_amount;
         // 绑定默认地址
         this.nowsite = default_address_id;
     },
     methods: {
+        get_carts() {
+            let url = '/carts/simple/';
+            axios.get(url, {
+                responseType: 'json',
+            })
+                .then(response => {
+                    this.carts = response.data.cart_skus;
+                    this.cart_total_count = 0;
+                    for (let i = 0; i < this.carts.length; i++) {
+                        if (this.carts[i].name.length > 25) {
+                            this.carts[i].name = this.carts[i].name.substring(0, 25) + '...';
+                        }
+                        this.cart_total_count += this.carts[i].count;
+                    }
+                })
+                .catch(error => {
+                    console.log(error.response);
+                })
+        },
         // 提交订单
-        on_order_submit(){
+        on_order_submit() {
             if (!this.nowsite) {
                 alert('请补充收货地址');
                 return;
@@ -26,23 +48,23 @@ var vm = new Vue({
                 alert('请选择付款方式');
                 return;
             }
-            if (this.order_submitting == false){
+            if (this.order_submitting == false) {
                 this.order_submitting = true;
                 var url = this.host + '/orders/commit/';
                 axios.post(url, {
-                        address_id: this.nowsite,
-                        pay_method: this.pay_method
-                    }, {
-                        headers:{
-                            'X-CSRFToken':getCookie('csrftoken')
-                        },
-                        responseType: 'json'
-                    })
+                    address_id: this.nowsite,
+                    pay_method: this.pay_method
+                }, {
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    responseType: 'json'
+                })
                     .then(response => {
                         if (response.data.code == '0') {
-                            location.href = '/orders/success/?order_id='+response.data.order_id
-                                        +'&payment_amount='+this.payment_amount
-                                        +'&pay_method='+this.pay_method;
+                            location.href = '/orders/success/?order_id=' + response.data.order_id
+                                + '&payment_amount=' + this.payment_amount
+                                + '&pay_method=' + this.pay_method;
                         } else if (response.data.code == '4101') {
                             location.href = '/login/?next=/orders/settlement/';
                         } else {

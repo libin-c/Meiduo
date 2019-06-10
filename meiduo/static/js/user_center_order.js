@@ -4,12 +4,33 @@ var vm = new Vue({
     delimiters: ['[[', ']]'],
     data: {
         host: host,
+        cart_total_count: 0,
+        carts: [],
     },
-    mounted(){
-
+    mounted() {
+        this.get_carts();
     },
     methods: {
-        oper_btn_click(order_id, status){
+        get_carts() {
+            let url = '/carts/simple/';
+            axios.get(url, {
+                responseType: 'json',
+            })
+                .then(response => {
+                    this.carts = response.data.cart_skus;
+                    this.cart_total_count = 0;
+                    for (let i = 0; i < this.carts.length; i++) {
+                        if (this.carts[i].name.length > 25) {
+                            this.carts[i].name = this.carts[i].name.substring(0, 25) + '...';
+                        }
+                        this.cart_total_count += this.carts[i].count;
+                    }
+                })
+                .catch(error => {
+                    console.log(error.response);
+                })
+        },
+        oper_btn_click(order_id, status) {
             if (status == '1') {
                 // 待支付
                 var url = this.host + '/payment/' + order_id + '/';
@@ -37,12 +58,6 @@ var vm = new Vue({
         },
     }
 });
-
-
-
-
-
-
 
 
 // $(function () {

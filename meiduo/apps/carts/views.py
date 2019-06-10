@@ -1,16 +1,18 @@
 import base64
 import json
 import pickle
+from decimal import Decimal
 
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import render
 from django_redis import get_redis_connection
-
 from apps.carts import constants
 from apps.contents.models import SKU
 # Create your views here.
 from django.views import View
 
+from apps.users.models import Address
 from utils.cookiesecret import CookieSecret
 from utils.response_code import RETCODE
 
@@ -721,3 +723,53 @@ class CartsSimpleView(View):
 
         # 响应json列表数据
         return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'cart_skus': cart_skus})
+
+class OrderSettlementView(LoginRequiredMixin,View):
+    """结算订单"""
+    def get(self, request):
+        """提供订单结算页面"""
+        # 获取登录用户
+        user = request.user
+        # 查询地址信息
+        try:
+            addresses = Address.objects.filter(user=request.user, is_deleted=False)
+        except Address.DoesNotExist:
+            # 如果地址为空，渲染模板时会判断，并跳转到地址编辑页面
+            addresses = None
+
+        # 从Redis购物车中查询出被勾选的商品信息
+        redis_conn = get_redis_connection('carts')
+        redis_data = redis_conn.hgetall(user.id)
+        # cart_dict = {int(data[0].decode()): json.loads(data[1].decode()) for data in carts_data.items()}
+        carts_dict = {}
+        for carts in redis_data.items():
+            sku_id = int(carts[0].decode())
+            sku_dict = json.loads(carts[1].decode())
+            if sku_dict['selected']:
+                carts_dict[sku_id] =sku_dict
+        # 准备初始值
+        total_count = constants.TOTAL_COUNT
+        total_amount = Decimal(constants.TOTAL_AMOUNT)
+        # 查询商品信息
+        skus = SKU.objects.filter(id__in=carts_dict.keys())
+        for sku in skus:
+            sku.count = carts_dict[sku.id]['count']
+            sku.amount = sku.count * sku.price
+            # 计算总数量和总金额
+            total_count += sku.count
+            total_amount += sku.count * sku.price
+        # 补充运费
+        freight = Decimal(constants.FREIGHT)
+
+        # 渲染界面
+        context = {
+            'addresses': addresses,
+            'skus': skus,
+            'total_count': total_count,
+            'total_amount': total_amount,
+            'freight': freight,
+            'payment_amount':total_amount + freight,
+            'default_address_id':user.default_address_id
+        }
+
+        return render(request, 'place_order.html', context)

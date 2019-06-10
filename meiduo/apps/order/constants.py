@@ -1,4 +1,3 @@
-CARTS_COOKIE_EXPIRES = 24 * 24 * 3600
 # freight 运费
 FREIGHT = 10.00
 # 默认个数 total_count

@@ -6,6 +6,8 @@ urlpatterns = [
     url(r'^carts/$', views.CartsView.as_view(),name='info'),
     # 全选购物车/carts/selection/
     url(r'^carts/selection/$', views.CartsSelectAllView.as_view(), name='carts_select'),
-    # # 页面简单购物车 /carts/simple/
+    # 页面简单购物车 /carts/simple/
     url(r'^carts/simple/$', views.CartsSimpleView.as_view(), name='carts_simple'),
+    # 订单  orders/settlement/
+    url(r'^orders/settlement/$', views.OrderSettlementView.as_view(), name='order'),
 ]

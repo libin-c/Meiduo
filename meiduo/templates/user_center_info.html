@@ -46,7 +46,7 @@
     </div>
 
     <div class="search_bar clearfix">
-        <a href="{{ url('contents:index') }}" class="logo fl"><img src="../static/images/logo.png"></a>
+        <a href="{{ url('contents:index') }}" class="logo fl"><img src="{{ static('images/logo.png') }}"></a>
         <div class="search_wrap fl">
             <form method="get" action="/search/" class="search_con">
                 <input type="text" class="input_text fl" name="q" placeholder="搜索商品">
@@ -55,9 +55,20 @@
             <ul class="search_suggest fl">
                 <li><a href="#">索尼微单</a></li>
                 <li><a href="#">优惠15元</a></li>
-                *`--
                 <li><a href="#">美妆个护</a></li>
                 <li><a href="#">买2免1</a></li>
+            </ul>
+        </div>
+
+        <div @mouseenter="get_carts" class="guest_cart fr" v-cloak>
+            <a href="{{ url('carts:info') }}" class="cart_name fl">我的购物车</a>
+            <div class="goods_count fl" id="show_count">[[ cart_total_count ]]</div>
+            <ul class="cart_goods_show">
+                <li v-for="sku in carts">
+                    <img :src="sku.default_image_url" alt="商品图片">
+                    <h4>[[ sku.name ]]</h4>
+                    <div>[[ sku.count ]]</div>
+                </li>
             </ul>
         </div>
     </div>

@@ -53,6 +53,8 @@ INSTALLED_APPS = [
     'haystack',
     # 购物车应用
     'apps.carts',
+    # 订单应用
+    'apps.order',
 ]
 
 MIDDLEWARE = [

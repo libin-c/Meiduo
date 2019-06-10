@@ -34,6 +34,8 @@ urlpatterns = [
     # 检索引擎 甘草
     url(r'^search/', include('haystack.urls')),
     # 购物车
-    url(r'^', include('apps.carts.urls',namespace='carts')),
+    url(r'^', include('apps.carts.urls', namespace='carts')),
+    # 订单
+    url(r'^', include('apps.order.urls', namespace='order')),
 
 ]

@@ -10,15 +10,37 @@ var vm = new Vue({
         error_opwd: false,
         error_pwd: false,
         error_cpwd: false,
-        error_password_message:'请输入8-12位的密码'
+        error_password_message: '请输入8-12位的密码',
+        cart_total_count: 0,
+        carts: [],
     },
-    mounted(){
-        this.username=getCookie('username');
+    mounted() {
+        this.get_carts();
+        this.username = getCookie('username');
         console.log(this.username);
     },
     methods: {
+        get_carts() {
+            let url = '/carts/simple/';
+            axios.get(url, {
+                responseType: 'json',
+            })
+                .then(response => {
+                    this.carts = response.data.cart_skus;
+                    this.cart_total_count = 0;
+                    for (let i = 0; i < this.carts.length; i++) {
+                        if (this.carts[i].name.length > 25) {
+                            this.carts[i].name = this.carts[i].name.substring(0, 25) + '...';
+                        }
+                        this.cart_total_count += this.carts[i].count;
+                    }
+                })
+                .catch(error => {
+                    console.log(error.response);
+                })
+        },
         // 检查旧密码
-        check_opwd(){
+        check_opwd() {
             var re = /^[0-9A-Za-z]{8,20}$/;
             if (re.test(this.old_pwd)) {
                 this.error_opwd = false;
@@ -42,7 +64,7 @@ var vm = new Vue({
             // }
         },
         // 检查新密码
-        check_pwd(){
+        check_pwd() {
             var re = /^[0-9A-Za-z]{8,20}$/;
             if (re.test(this.new_pwd)) {
                 this.error_pwd = false;
