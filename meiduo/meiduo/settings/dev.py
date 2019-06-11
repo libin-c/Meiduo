@@ -55,7 +55,19 @@ INSTALLED_APPS = [
     'apps.carts',
     # 订单应用
     'apps.order',
+    # 支付应用
+    'apps.payment',
+
+    'django_crontab',  # 定时任务
 ]
+CRONJOBS = [
+    # 每1分钟生成一次首页静态文件
+    (
+        '*/1 * * * *', 'apps.contents.crons.generate_static_index_html',
+        '>> ' + os.path.join(BASE_DIR, 'logs/crontab.log'))
+]
+
+CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -91,9 +103,19 @@ WSGI_APPLICATION = 'meiduo.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
-
+#
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',  # 数据库引擎
+#         'HOST': '39.96.172.253',  # 数据库主机
+#         'PORT': 3306,  # 数据库端口
+#         'USER': 'libin',  # 数据库用户名
+#         'PASSWORD': 'root',  # 数据库用户密码
+#         'NAME': 'meiduo'  # 数据库名字
+#     },
+# }
 DATABASES = {
-    'default': {
+    'default': {  # 写（主机）
         'ENGINE': 'django.db.backends.mysql',  # 数据库引擎
         'HOST': '127.0.0.1',  # 数据库主机
         'PORT': 3306,  # 数据库端口
@@ -101,8 +123,16 @@ DATABASES = {
         'PASSWORD': 'root',  # 数据库用户密码
         'NAME': 'meiduo'  # 数据库名字
     },
+    'slave': {  # 读（从机）
+        'ENGINE': 'django.db.backends.mysql',
+        'HOST': '127.0.0.1',
+        'PORT': 8306,
+        'USER': 'root',
+        'PASSWORD': 'root',
+        'NAME': 'meiduo'
+    }
 }
-
+DATABASE_ROUTERS = ['utils.db_router.MasterSlaveDBRouter']
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
 
@@ -279,3 +309,9 @@ HAYSTACK_CONNECTIONS = {
 
 # 当添加、修改、删除数据时，自动生成索引
 HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+
+# 阿里支付
+ALIPAY_APPID = '2016092800618448'
+ALIPAY_DEBUG = True
+ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'
+ALIPAY_RETURN_URL = 'http://www.meiduo.site:8000/payment/status/'
