@@ -1,6 +1,10 @@
-from django.http import HttpResponse, JsonResponse
+import random
 
+from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
+
+from apps.users.models import User
 from apps.verifications import constants
+from utils.cookiesecret import CookieSecret
 from .constants import *
 # Create your views here.
 from django.views import View
@@ -97,3 +101,100 @@ class SMSCodeView(View):
         return JsonResponse({'code': RETCODE.OK, 'errmsg': '发送短信成功'})
 
 
+class PwdCodeView(View):
+    def get(self, request, username):
+
+        # 接收
+        uuid = request.GET.get('image_code_id')
+        image_code = request.GET.get('text')
+        # 2.图形验证码是否正确
+        # 2.1从redis中读取之前保存的图形验证码文本
+        redis_cli_image = get_redis_connection('verify_image_code')
+        image_code_redis =   redis_cli_image.get('img_%s' % uuid)
+        # 2.2如果redis中的数据过期则提示
+        if image_code_redis is None:
+            return JsonResponse({'code': RETCODE.IMAGECODEERR, 'errmsg': '图形验证码已过期，点击图片换一个'})
+
+        # 2.3立即删除redis中图形验证码，表示这个值不能使用第二次
+        redis_cli_image.delete(uuid)
+        # 2.3对比图形验证码：不区分大小写
+        if image_code_redis.decode().lower() != image_code.lower():
+            return JsonResponse({'code': RETCODE.IMAGECODEERR, 'errmsg': '图形验证码错误'})
+        try:
+            user = User.objects.get(username=username)
+        except:
+            return JsonResponse({}, status=404)
+
+        # 处理
+
+        json_str = CookieSecret.dumps({"user_id": user.id, 'mobile': user.mobile})
+
+        return JsonResponse({'mobile': user.mobile, 'access_token': json_str})
+
+
+class PwdSMSCodeView(View):
+    def get(self, request):
+
+        access_token = request.GET.get('access_token')
+
+        user_dict = CookieSecret.loads(access_token)
+
+        if user_dict is None:
+            return JsonResponse({}, status=400)
+
+        mobile = user_dict['mobile']
+        try:
+            User.objects.get(mobile=mobile)
+        except:
+            return JsonResponse({}, status=400)
+
+        # 验证
+        redis_cli_sms = get_redis_connection('sms_code')
+        # 0.是否60秒内
+        if redis_cli_sms.get(mobile + '_flag') is not None:
+            return JsonResponse({'code': RETCODE.SMSCODERR, 'errmsg': '发送短信太频繁，请稍候再发'})
+
+        # # 处理
+        # # 1.生成随机6位数
+        sms_code = '%06d' % random.randint(0, 999999)
+        print(sms_code)
+        # 优化：使用管道
+        redis_pl = redis_cli_sms.pipeline()
+        redis_pl.setex(mobile, constants.SMS_CODE_EXPIRES, sms_code)
+        redis_pl.setex(mobile + '_flag', constants.SMS_CODE_FLAG, 1)
+        redis_pl.execute()
+        # 3.发短信
+        # 通过delay调用，可以将任务加到队列中，交给celery去执行
+        from celery_tasks.sms.tasks import ccp_send_sms_code
+        ccp_send_sms_code.delay(mobile, sms_code)
+
+        # 响应
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
+
+class PwdCheckCodeView(View):
+    def get(self, request, username):
+
+        sms_code = request.GET.get('sms_code')
+
+        try:
+            user = User.objects.get(username=username)
+        except:
+            return JsonResponse({}, status=400)
+
+        # 短信验证码
+        # 1.读取redis中的短信验证码
+        redis_cli = get_redis_connection('sms_code')
+        sms_code_redis = redis_cli.get(user.mobile)
+        # 2.判断是否过期
+        if sms_code_redis is None:
+            return HttpResponseForbidden('短信验证码已经过期')
+        # 3.删除短信验证码，不可以使用第二次
+        redis_cli.delete(user.mobile)
+        redis_cli.delete(user.mobile + '_flag')
+        # 4.判断是否正确
+        if sms_code_redis.decode() != sms_code:
+            return HttpResponseForbidden('短信验证码错误')
+
+        json_str = CookieSecret.dumps({"user_id": user.id, 'mobile': user.mobile})
+        return JsonResponse({'user_id': user.id, 'access_token': json_str})

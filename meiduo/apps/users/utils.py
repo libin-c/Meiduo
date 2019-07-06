@@ -61,8 +61,8 @@ def generate_verify_email_url(user):
     secret_dict = SecretOauth().dumps(data_dict)
 
     # 3. 返回拼接的url
-    active_url = settings.EMAIL_VERIFY_URL + '?token=' + secret_dict
-    return active_url
+    verify_url = settings.EMAIL_ACTIVE_URL + '?token=' + secret_dict
+    return verify_url
 
 
 def check_verify_email_token(token):

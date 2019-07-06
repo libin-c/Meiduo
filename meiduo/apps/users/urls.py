@@ -34,5 +34,13 @@ urlpatterns = [
     # 15. 浏览记录 /browse_histories/
     url(r'^browse_histories/$', views.UserBrowseHistoryView.as_view(), name='history'),
     # 16 我的订单 /orders/comment/
-    url(r'^orders/$', views.UserOrderView.as_view(), name='order'),
+
+    # 用户全部订单
+    # 用户全部订单
+    url(r'^orders/info/(?P<page_num>\d+)/$', views.UserOrderInfoView.as_view(),name='order'),
+
+    # 获取找回密码页面
+    url('^find_password/$', views.FindPwdView.as_view()),
+    # 找回密码第三步，修改密码
+    url('^users/(?P<user_id>\d+)/password/$', views.ChangePwdView.as_view()),
 ]

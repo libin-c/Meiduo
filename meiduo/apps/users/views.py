@@ -1,6 +1,7 @@
 import json
 from django.contrib.auth import login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
@@ -13,17 +14,94 @@ import re
 from django_redis import get_redis_connection
 
 from apps.carts.utils import merge_cart_cookie_to_redis
+from apps.order.models import OrderInfo
 from apps.users import constants
 from apps.users.models import User, Address
 from apps.users.utils import generate_verify_email_url, check_verify_email_token
-from celery_tasks.email.tasks import send_verify_email
+
 from meiduo.settings.dev import logger
+from utils.cookiesecret import CookieSecret
 from utils.response_code import RETCODE
 from apps.contents.models import SKU
 
-class UserOrderView(LoginRequiredMixin,View):
-    def get(self,request):
-        return  render(request, 'user_center_order.html')
+
+class UserOrderInfoView(LoginRequiredMixin,View):
+
+    def get(self, request, page_num):
+
+        user = request.user
+        # 查询当前登录用户的所有订单
+        order_qs = OrderInfo.objects.filter(user=user).order_by('-create_time')
+        for order_model in order_qs:
+
+            # 给每个订单多定义两个属性, 订单支付方式中文名字, 订单状态中文名字
+            order_model.pay_method_name = OrderInfo.PAY_METHOD_CHOICES[order_model.pay_method - 1][1]
+            order_model.status_name = OrderInfo.ORDER_STATUS_CHOICES[order_model.status - 1][1]
+            # 再给订单模型对象定义sku_list属性,用它来包装订单中的所有商品
+            order_model.sku_list = []
+
+            # 获取订单中的所有商品
+            order_good_qs = order_model.skus.all()
+            # 遍历订单中所有商品查询集
+            for good_model in order_good_qs:
+                sku = good_model.sku  # 获取到订单商品所对应的sku
+                sku.count = good_model.count  # 绑定它买了几件
+                sku.amount = sku.price * sku.count  # 给sku绑定一个小计总额
+                # 把sku添加到订单sku_list列表中
+                order_model.sku_list.append(sku)
+
+        # 创建分页器对订单数据进行分页
+        # 创建分页对象
+        paginator = Paginator(order_qs, 2)
+        # 获取指定页的所有数据
+        page_orders = paginator.page(page_num)
+        # 获取总页数
+        total_page = paginator.num_pages
+
+        context = {
+            'page_orders': page_orders,  # 当前这一页要显示的所有订单数据
+            'page_num': page_num,  # 当前是第几页
+            'total_page': total_page  # 总页数
+        }
+        return render(request, 'user_center_order.html', context)
+
+
+class FindPwdView(View):
+    def get(self, request):
+        return render(request, 'find_password.html')
+
+
+class ChangePwdView(View):
+    def post(self, request, user_id):
+        data = request.body.decode()
+        data_dict = json.loads(data)
+        password = data_dict.get('password')
+        password2 = data_dict.get('password2')
+        access_token = data_dict.get('access_token')
+        # 1.非空
+        if not all([access_token, password, password2, ]):
+            return HttpResponseForbidden('填写数据不完整')
+        if password != password2:
+            return HttpResponseForbidden('两个密码不一致')
+
+        user_dict = CookieSecret.loads(access_token)
+        if user_dict is None:
+            return JsonResponse({}, status=400)
+
+        if int(user_id) != user_dict['user_id']:
+            return JsonResponse({}, status=400)
+
+        try:
+            user = User.objects.get(id=user_id)
+        except:
+            return JsonResponse({}, status=400)
+
+        user.set_password(password)
+        user.save()
+        return JsonResponse({})
+
+
+
 
 
 class UserBrowseHistoryView(LoginRequiredMixin, View):
@@ -416,10 +494,11 @@ class EmailView(LoginRequiredMixin, View):
             request.user.save()
         except Exception as e:
             logger.error(e)
-            return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '添加邮箱失败'})
+            return JsonResponse({'code': RETCODE.EMAILERR, 'errmsg': '添加邮箱失败'})
         # 4.异步发送邮件
 
         verify_url = generate_verify_email_url(request.user)
+        from celery_tasks.email.tasks import send_verify_email
         send_verify_email.delay(email, verify_url)
         return JsonResponse({'code': RETCODE.OK, 'errmsg': '添加邮箱成功'})
 
@@ -477,6 +556,7 @@ class LoginView(View):
         # 3.验证用户名和密码--django自带的认证
         from django.contrib.auth import authenticate, login
         user = authenticate(username=username, password=password)
+        # user = User.objects.get(username=username,password=password)
 
         if user is None:
             return render(request, 'login.html', {'account_errmsg': '用户名或密码错误'})

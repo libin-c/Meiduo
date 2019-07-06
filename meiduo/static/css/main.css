@@ -1489,16 +1489,18 @@ html, body {
     margin-top: 30px
 }
 
-.qq_login, .weixin_login, .register_btn {
-    float: left;
-    line-height: 30px;
-    margin-left: 15px;
-    margin-top: 7px;
-    color: #666;
-    font-size: 12px;
-    text-indent: 22px;
-    background: url(../images/QQ-weixin.png) left 7px no-repeat;
-}
+/*.qq_login, .weixin_login, .register_btn {*/
+/*    float: left;*/
+/*    line-height: 30px;*/
+/*    margin-left: 15px;*/
+/*    margin-top: 7px;*/
+/*    color: #666;*/
+/*    font-size: 12px;*/
+/*    text-indent: 22px;*/
+/*    background: url(../images/QQ-weixin.png) left 7px no-repeat;*/
+/*}*/
+.qq_login,.weixin_login,.register_btn,.weibo_login{float:left;line-height:30px;margin-left:15px;margin-top:7px;color:#666;font-size:12px;text-indent:22px;background:url(../images/QQ-weixin.png) left 7px no-repeat;}
+.weibo_login{weight:30px;height: 30px; float:left;line-height:30px;margin-left:15px;margin-top: 7px;color:#666;font-size:12px;text-indent:22px;background:url(../images/Weibo.ico) left 7px no-repeat;;background-size: 20px 20px;background-position: 0px 5px;}
 
 .qq_login:hover, .weixin_login:hover, .register_btn:hover {
     color: #e3101e;

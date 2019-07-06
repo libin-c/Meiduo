@@ -59,7 +59,8 @@ class OrderCommitView(LoginRequiredMixin, View):
                     total_amount=Decimal(constants.TOTAL_AMOUNT),
                     freight=Decimal(constants.FREIGHT),
                     pay_method=pay_method,
-                    status=OrderInfo.ORDER_STATUS_ENUM['UNPAID'] if pay_method == OrderInfo.PAY_METHODS_ENUM['ALIPAY'] else
+                    status=OrderInfo.ORDER_STATUS_ENUM['UNPAID'] if pay_method == OrderInfo.PAY_METHODS_ENUM[
+                        'ALIPAY'] else
                     OrderInfo.ORDER_STATUS_ENUM['UNSEND']
                 )
                 # 从redis读取购物车中被勾选的商品信息
@@ -143,9 +144,8 @@ class OrderCommitView(LoginRequiredMixin, View):
             # 清除购物车已经结算过的商品
         redis_conn.hdel(user.id, *carts_dict)
 
-            # 返回响应结果
+        # 返回响应结果
         return JsonResponse({'code': RETCODE.OK, 'errmsg': '下单成功', 'order_id': order.order_id})
-
 
 
 # 3.订单成功
@@ -164,3 +164,118 @@ class OrdersSuccessView(View):
 
         }
         return render(request, 'order_success.html', context)
+
+
+class OrderCommentView(LoginRequiredMixin,View):
+    """订单评价"""
+
+    def get(self, request):
+        """展示订单评价界面"""
+        # 接收查询参数
+        order_id = request.GET.get('order_id')
+        # 校验
+        try:
+            order = OrderInfo.objects.get(order_id=order_id, user=request.user,
+                                          status=OrderInfo.ORDER_STATUS_ENUM['UNCOMMENT'])
+        except OrderInfo.DoesNotExist:
+            return HttpResponseForbidden('订单有误')
+
+        # 查询当前订单中所有未评价的商品
+        # order_goods_qs = order.skus.filter(is_commented=False)
+        order_goods_qs = OrderGoods.objects.filter(order=order, is_commented=False)
+        # 构造前端渲染需要的数据
+        uncomment_goods_list = []
+        for order_goods in order_goods_qs:
+            sku = order_goods.sku
+            uncomment_goods_list.append({
+                'order_id': order_id,
+                'sku_id': sku.id,
+                'default_image_url': sku.default_image.url,
+                'name': sku.name,
+                'price': str(sku.price),
+                'score': order_goods.score,
+                'comment': order_goods.comment,
+                'is_anonymous': str(order_goods.is_anonymous),
+                'is_comment': str(order_goods.is_commented)
+            })
+
+        context = {
+            'uncomment_goods_list': uncomment_goods_list
+        }
+        return render(request, 'goods_judge.html', context)
+
+    def post(self, request):
+        """提交评价信息"""
+        # 获取请求体中的数据
+        json_dict = json.loads(request.body.decode())
+        order_id = json_dict.get('order_id')
+        sku_id = json_dict.get('sku_id')
+        comment = json_dict.get('comment')
+        score = json_dict.get('score')
+        is_anonymous = json_dict.get('is_anonymous')
+
+        # 校验
+        if all([order_id, sku_id, comment, score]) is False:
+            return HttpResponseForbidden('缺少必传参数')
+        try:
+            order = OrderInfo.objects.get(order_id=order_id, user=request.user,
+                                          status=OrderInfo.ORDER_STATUS_ENUM['UNCOMMENT'])
+        except OrderInfo.DoesNotExist:
+            return HttpResponseForbidden('订单信息有误')
+
+        try:
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return HttpResponseForbidden('sku不存在')
+
+        if isinstance(is_anonymous, bool) is False:
+            return HttpResponseForbidden('参数类型有误')
+
+        # 修改OrderGoods中的评价信息
+        OrderGoods.objects.filter(sku_id=sku_id, order_id=order_id, is_commented=False).update(
+            is_anonymous=is_anonymous,
+            score=score,
+            comment=comment,
+            is_commented=True
+        )
+        # 修改sku和spu的评价量
+        sku.comments += 1
+        sku.save()
+
+        sku.spu.comments += 1
+        sku.spu.save()
+        # 判断订单中的商品是否全部评价完成,如果都评价后将订单状态修改为已完成
+        if OrderGoods.objects.filter(order_id=order_id, is_commented=False).count() == 0:
+            order.status = OrderInfo.ORDER_STATUS_ENUM['FINISHED']
+            order.save()
+
+        # 响应
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
+
+class GoodsCommentView(View):
+    """获取评价信息"""
+
+    def get(self, request, sku_id):
+        # 校验
+        try:
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return HttpResponseForbidden('sku不存在')
+
+        # 获取OrderGoods中的当前sku_id的所有OrderGoods
+        order_goods_qs = OrderGoods.objects.filter(sku_id=sku_id, is_commented=True).order_by('-create_time')
+
+        comments = []
+        # 构造前端需要的数据格式  username, score , comment
+        for order_goods in order_goods_qs:
+            username = order_goods.order.user.username  # 获取当前订单商品所属用户名
+
+            comments.append({
+                'username': (username[0] + '***' + username[-1]) if order_goods.is_anonymous else username,
+                'score': order_goods.score,
+                'comment': order_goods.comment
+            })
+
+        # 响应
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'comment_list': comments})
