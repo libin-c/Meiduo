@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'apps.payment',
 
     'django_crontab',  # 定时任务
+
 ]
 CRONJOBS = [
     # 每1分钟生成一次首页静态文件
@@ -326,3 +327,8 @@ ALIPAY_APPID = '2016092800618448'
 ALIPAY_DEBUG = True
 ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'
 ALIPAY_RETURN_URL = 'http://www.meiduo.site:8000/payment/status/'
+
+# 微博登录
+APP_KEY = '3305669385'
+APP_SECRET = '74c7bea69d5fc64f5c3b80c802325276'
+REDIRECT_URL = 'http://www.meiduo.site:8000/sina_callback'

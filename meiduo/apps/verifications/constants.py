@@ -1,6 +1,6 @@
 # 短信过期时间
 SMS_EXPIRATION_TIME = 300
-
+conton_sms_code_time = 300
 # 频繁发送信息
 SMS_SEND_FREQUENT = 60
 
