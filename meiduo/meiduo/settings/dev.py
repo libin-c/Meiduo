@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/1.11/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
-
+import datetime
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -57,8 +57,12 @@ INSTALLED_APPS = [
     'apps.order',
     # 支付应用
     'apps.payment',
+    # 美多后台
+    'apps.meiduo_admin',
 
     'django_crontab',  # 定时任务
+
+    'corsheaders',  # cors 同源策略跨域访问的问题
 
 ]
 CRONJOBS = [
@@ -74,7 +78,9 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
+    # 跨域资源共享的中间件
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -108,7 +114,7 @@ WSGI_APPLICATION = 'meiduo.wsgi.application'
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.mysql',  # 数据库引擎
-#         'HOST': '39.96.172.253',  # 数据库主机
+#         'HOST': '127.0.0.1',  # 数据库主机
 #         'PORT': 3306,  # 数据库端口
 #         'USER': 'libin',  # 数据库用户名
 #         'PASSWORD': 'root',  # 数据库用户密码
@@ -332,3 +338,33 @@ ALIPAY_RETURN_URL = 'http://www.meiduo.site:8000/payment/status/'
 APP_KEY = '3305669385'
 APP_SECRET = '74c7bea69d5fc64f5c3b80c802325276'
 REDIRECT_URL = 'http://www.meiduo.site:8000/sina_callback'
+
+# CORS
+CORS_ORIGIN_WHITELIST = (
+    'http://127.0.0.1:8080',
+    'http://39.96.172.253:8080',
+    'http://localhost:8080',
+    'http://www.meiduo.site:8080',
+    'http://api.meiduo.site:8000'
+)
+CORS_ALLOW_CREDENTIALS = True  # 允许携带cookie
+
+REST_FRAMEWORK = {
+    # 全局认证设置
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+}
+
+JWT_AUTH = {
+    # 设置有效期
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1),
+    # 设置JWT 返回数据的方法
+
+    'JWT_RESPONSE_PAYLOAD_HANDLER': 'apps.meiduo_admin.utils.jwt_response_payload_handler',
+}
+
+
+FASTDFS_CONF=os.path.join(BASE_DIR, 'utils/fastdfs/client.conf')

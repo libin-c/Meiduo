@@ -42,10 +42,21 @@ class UsernameMobileAuthBackend(ModelBackend):
         #     user = User.objects.get(username=username)
         # if user and user.check.password(password):
         #     return user
-        user = get_user_by_account(username)
-        # 校验user是否存在并校验密码是否正确
-        if user and user.check_password(password):
-            return user
+        # 通过request 判断是前段还是后端用户
+        if request is None:
+            try:
+                user = User.objects.get(username=username, is_staff=True)
+            except:
+                user =None
+            if user and user.check_password(password):
+                return user
+            
+
+        else:
+            user = get_user_by_account(username)
+            # 校验user是否存在并校验密码是否正确
+            if user and user.check_password(password):
+                return user
 
 
 def generate_verify_email_url(user):

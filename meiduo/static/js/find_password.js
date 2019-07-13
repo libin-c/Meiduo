@@ -184,7 +184,7 @@ var vm = new Vue({
                             this.error_sms_code_message = '手机号不存在';
                             this.error_sms_code = true;
                         } else {
-                            alert(error.response.data.message);
+
                             console.log(error.response.data);
                         }
                     })
@@ -215,7 +215,13 @@ var vm = new Vue({
                         password: this.password,
                         password2: this.password2,
                         access_token: this.access_token
-                    }, {
+                    },
+                    {
+                        headers:{
+                            'X-CSRFToken':getCookie('csrftoken')
+                        }
+                    },
+                    {
                         responseType: 'json'
                     })
                     .then(response => {

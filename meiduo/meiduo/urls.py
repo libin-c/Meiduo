@@ -39,5 +39,6 @@ urlpatterns = [
     url(r'^', include('apps.order.urls', namespace='order')),
     # 支付
     url(r'^', include('apps.payment.urls', namespace='payment')),
-
+    # 美多后台
+    url(r'^meiduo_admin/', include('apps.meiduo_admin.urls')),
 ]

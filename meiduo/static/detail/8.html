@@ -36,7 +36,7 @@
                     <span>|</span>
                     <a href="/carts/">我的购物车</a>
                     <span>|</span>
-                    <a href="/orders/">我的订单</a>
+                    <a href="/orders/info/1/">我的订单</a>
                 </div>
             </div>
         </div>
@@ -1660,7 +1660,7 @@
             <p>选【移动优惠购】新机配新卡，198优质靓号，流量不限量！</p>
             <div class="price_bar">
                 <span class="show_pirce">¥<em>7988.00</em></span>
-                <a href="javascript:;" class="goods_judge">18人评价</a>
+                <a href="javascript:;" class="goods_judge">([[ comments.length ]])人评价</a>
             </div>
             <div class="goods_num clearfix">
                 <div class="num_name fl">数 量：</div>
@@ -1675,11 +1675,13 @@
                     <label>颜色:</label>
                     
                         
-                            <a href="/detail/4/">金色</a>
+
+                             <a href="/static/detail/4.html">金色</a>
                         
                     
                         
-                            <a href="/detail/6/">深空灰</a>
+
+                             <a href="/static/detail/6.html">深空灰</a>
                         
                     
                         
@@ -1692,7 +1694,8 @@
                     <label>内存:</label>
                     
                         
-                            <a href="/detail/7/">64GB</a>
+
+                             <a href="/static/detail/7.html">64GB</a>
                         
                     
                         
@@ -1725,7 +1728,7 @@
                 <li @click="on_tab_content('detail')" :class="tab_content.detail?'active':''">商品详情</li>
                 <li @click="on_tab_content('pack')" :class="tab_content.pack?'active':''">规格与包装</li>
                 <li @click="on_tab_content('service')" :class="tab_content.service?'active':''">售后服务</li>
-                <li @click="on_tab_content('comment')" :class="tab_content.comment?'active':''">商品评价(18)</li>
+                <li @click="on_tab_content('comment')" :class="tab_content.comment?'active':''">商品评价([[ comments.length ]])</li>
             </ul>
             <div @click="on_tab_content('detail')" class="tab_content" :class="tab_content.detail?'current':''">
                 <dl>
@@ -1746,6 +1749,22 @@
 
 <p>采用 Lightning 接头的 EarPods *1，iPhone *1，Lightning 至 USB 连接线*1，5W USB 电源适配器*1，Lightning 至3.5毫米耳机插孔转换器*1</p></dd>
                 </dl>
+            </div>
+             <div @click="on_tab_content('comment')" class="tab_content" :class="tab_content.comment?'current':''">
+                <ul class="judge_list_con">
+                    <li class="judge_list fl" v-for="comment in comments">
+                        <div class="user_info fl">
+                            <img src="/static/images/cat.jpg">
+                            <b>[[ comment.username ]]</b>
+                        </div>
+                        <div class="judge_info fl">
+                           <div :class="comment.score_class"></div>
+                            <div class="judge_detail">
+                                [[ comment.comment ]]
+                            </div>
+                        </div>
+                    </li>
+                </ul>
             </div>
             <div @click="on_tab_content('service')" class="tab_content" :class="tab_content.service?'current':''">
                 <dl>
@@ -1775,22 +1794,22 @@
 注：因厂家会在没有任何提前通知的情况下更改产品包装、产地或者一些附件，本司不能确保客户收到的货物与商城图片、产地、附件说明完全一致。只能确保为原厂正货！并且保证与当时市场上同样主流新品一致。若本商城没有及时更新，请大家谅解！</p></dd>
                 </dl>
             </div>
-            <div @click="on_tab_content('comment')" class="tab_content" :class="tab_content.comment?'current':''">
-                <ul class="judge_list_con">
-                    <li class="judge_list fl">
-                        <div class="user_info fl">
-                            <img src="/static/images/cat.jpg">
-                            <b>张***厨</b>
-                        </div>
-                        <div class="judge_info fl">
-                            <div class="stars_five"></div>
-                            <div class="judge_detail">
-                                派送非常快，第二天上午就收到。2天使用初步总结，前一部手机也是华为P9plus.MATE10pro包装原封未拆精致大气。拆开后第一眼就看到宝石蓝的手机，非常惊艳；然后就是配件一应俱全。开机各方面设置，把通讯录、短信等同步好，同品牌手机同步很快。和P9plus一样的后置指纹识别很方便。录制指纹容易，解锁非常快，秒开！屏幕完好，默认分辨率显示效果很好。
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         </div>
     </div>
     <div class="footer">

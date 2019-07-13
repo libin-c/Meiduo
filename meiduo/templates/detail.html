@@ -135,7 +135,8 @@
                         {% if option.sku_id == sku.id %}
                             <a href="javascript:;" class="select">{{ option.value }}</a>
                         {% elif option.sku_id %}
-                            <a href="{{ url('goods:detail', args=(option.sku_id, )) }}">{{ option.value }}</a>
+{#                            <a href="{{ url('goods:detail', args=(option.sku_id, )) }}">{{ option.value }}</a>#}
+                             <a href="/static/detail/{{ option.sku_id }}.html">{{ option.value }}</a>
                         {% else %}
                             <a href="javascript:;">{{ option.value }}</a>
                         {% endif %}
